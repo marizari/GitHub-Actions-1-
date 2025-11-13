@@ -1,0 +1,20 @@
+name: Exemplo Variável
+
+on: 
+  push:
+    branches: ["*"]
+  workflow_dispatch:
+
+jobs:
+  exemplo:
+    runs-on: ubuntu-latest
+
+    env:
+      NOME: "Mah" 
+
+    steps:
+      - name: Mostrar variável
+        run: echo "Olá, $NOME!"
+
+    
+     
