@@ -1,0 +1,78 @@
+name: Laravel CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  laravel-tests:
+    name: Testar e preparar ambiente Laravel
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Baixa o código do repositório
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2️⃣ Instala PHP (você pode mudar a versão se quiser)
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, intl, gd, pdo_mysql
+          coverage: none
+
+      # 3️⃣ Instala dependências do Composer
+      - name: Instalar dependências
+        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      # 4️⃣ Copia o .env.example para .env e gera key
+      - name: Configurar ambiente
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # 5️⃣ Garante que o banco de testes exista
+      - name: Configurar banco SQLite
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+      # 6️⃣ Executa as migrations
+      - name: Rodar migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+      # 7️⃣ Executa os testes (PHPUnit)
+      - name: Rodar testes
+        run: php artisan test --parallel
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
+  # 🚀 Job opcional para deploy (exemplo com FTP)
+  deploy:
+    name: Deploy para servidor
+    needs: laravel-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 💾 Envia arquivos via FTP (exemplo, pode trocar por outro método)
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /meu_projeto_laravel/
