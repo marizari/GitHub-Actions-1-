@@ -1,0 +1,15 @@
+name: Hello World
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:  
+      - name: Exibindo Mensagem
+        run: echo "Hello World"
+     
